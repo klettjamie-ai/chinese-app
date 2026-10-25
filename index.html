@@ -1,0 +1,152 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="汉语 Hànyǔ">
+<meta name="theme-color" content="#fff5ee"><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-180.png">
+<title>汉语 Hànyǔ</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--ink:#4b3434;--mint:#bff0dc;--lav:#ffd9d2;--peach:#ffe2b0;--blue:#ffe3c9;--butter:#fff1b8;--pink:#ffc9c9}
+body{margin:0;font-family:ui-rounded,"SF Pro Rounded","Nunito",-apple-system,"PingFang SC","Hiragino Sans GB","Noto Sans SC",system-ui,sans-serif;background:linear-gradient(170deg,#fff5ee 0%,#fffaf0 55%,#f3fbf6 100%);color:var(--ink);min-height:100vh;padding:env(safe-area-inset-top) 0 calc(78px + env(safe-area-inset-bottom))}
+header{display:flex;align-items:center;justify-content:space-between;padding:16px 18px}
+h1{font-size:24px;margin:0;font-weight:800}.streak{font-weight:800;font-size:17px;background:var(--peach);padding:6px 14px;border-radius:999px;box-shadow:0 4px 12px #ffb59a55}
+.view{display:none;padding:0 16px;animation:fade .3s}.view.on{display:block}@keyframes fade{from{opacity:0;transform:translateY(6px)}}
+nav{position:fixed;bottom:10px;left:12px;right:12px;display:flex;background:#fffffff2;padding:4px 4px calc(4px + env(safe-area-inset-bottom)/2);border-radius:26px;box-shadow:0 8px 24px #f0b7a655}
+nav button{flex:1;background:none;border:0;color:#a08580;padding:8px 0;font:inherit;font-size:12px;font-weight:700;border-radius:20px}nav button.on{color:var(--ink);background:var(--lav)}nav b{display:block;font-size:22px}
+.ringwrap{display:flex;align-items:center;gap:18px;background:#fff;border-radius:28px;padding:16px;margin-bottom:14px;box-shadow:0 8px 24px #f5bfae33}
+.ring{width:96px;height:96px}.sec{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.tile{border-radius:26px;padding:14px 6px;text-align:center;border:0;color:var(--ink);font:inherit;font-size:13px;font-weight:700;box-shadow:0 6px 16px #0000000f;transition:transform .15s}.tile:active{transform:scale(.94)}
+.tile .em{font-size:26px;display:block}.tile .n{font-size:28px;font-weight:900;display:block}
+.learn{background:var(--pink)}.practiced{background:var(--butter)}.learned{background:var(--mint)}
+.big{width:100%;padding:18px;border:0;border-radius:999px;font:inherit;font-size:21px;font-weight:900;background:linear-gradient(90deg,#ffb3a0,#ffd78a);color:var(--ink);margin:6px 0;box-shadow:0 8px 20px #ffb08a66;animation:pulse 2.4s 3}
+@keyframes pulse{50%{transform:scale(1.03)}}
+.card{perspective:1000px;height:50vh;max-height:420px;margin:10px 0 16px;touch-action:pan-y}
+.inner{position:relative;width:100%;height:100%;transition:transform .5s cubic-bezier(.3,1.4,.6,1);transform-style:preserve-3d}
+.card.flip .inner{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:36px;background:#fff;color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:22px;text-align:center;box-shadow:0 14px 34px #f0b7a644;border:4px solid var(--lav)}
+.back{transform:rotateY(180deg);background:#f4fffa;border-color:var(--mint)}.zh{font-size:64px;font-weight:800;line-height:1.15}.py{font-size:24px;font-weight:700;color:#e0573f;margin-top:6px}.py.sm{font-size:15px;font-weight:600}.hide-py .pyh{display:none}.en{font-size:22px;margin-top:10px;font-weight:600}.ex{font-size:16px;color:#7a5f5a;margin-top:14px;font-style:italic}
+.tag{position:absolute;top:14px;left:14px;font-size:12px;font-weight:800;padding:5px 12px;border-radius:20px;color:var(--ink)}
+.say{position:absolute;top:10px;right:12px;font-size:24px;background:var(--blue);border:0;border-radius:50%;width:44px;height:44px}
+.hint{color:#b09590;font-size:14px;margin-top:18px}
+.grade{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.grade button{border:0;border-radius:24px;padding:15px 4px;font:inherit;font-size:16px;font-weight:800;color:var(--ink);box-shadow:0 6px 14px #0000000f;transition:transform .12s}.grade button:active{transform:scale(.92)}
+.g0{background:var(--pink)}.g1{background:var(--butter)}.g2{background:var(--mint)}
+.card.wig{animation:wig .4s}.card.bnc{animation:bnc .45s}.card.pop{animation:pop .45s}
+@keyframes wig{20%,60%{transform:rotate(-4deg)}40%,80%{transform:rotate(4deg)}}
+@keyframes bnc{40%{transform:translateY(-14px)}70%{transform:translateY(4px)}}
+@keyframes pop{40%{transform:scale(1.07)}}
+.bar{height:12px;background:#fff;border-radius:12px;overflow:hidden;box-shadow:inset 0 1px 3px #0001}.bar i{display:block;height:100%;background:linear-gradient(90deg,#ffb7b0,#ffb3a0,#a8e6cf);border-radius:12px;transition:width .3s}
+input,select{width:100%;padding:13px 16px;border-radius:18px;border:2px solid var(--lav);font:inherit;font-size:17px;margin:5px 0;background:#fff;color:var(--ink)}
+.list .row{display:flex;align-items:center;gap:8px;background:#fff;border-radius:22px;padding:10px 12px;margin:8px 0;box-shadow:0 4px 12px #f0b7a622}
+.row div{flex:1;min-width:0}.row small{color:#7a5f5a;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row select{width:auto;font-size:13px;padding:6px 8px;border-radius:12px}.row .say{width:38px;height:38px;font-size:18px}
+.tabs{display:flex;gap:6px;margin:8px 0}.tabs button{flex:1;border:0;border-radius:18px;padding:10px 2px;color:var(--ink);font:inherit;opacity:.55;font-weight:800}.tabs button.on{opacity:1;box-shadow:0 4px 12px #0001}
+.empty{text-align:center;padding:30px 10px;color:#7a5f5a}.empty .e{font-size:54px;display:block;animation:bnc 1.8s 2}
+.toast{width:max-content;max-width:86vw;text-align:center;position:fixed;left:50%;top:40%;transform:translate(-50%,-50%) scale(.6);background:#fff;color:var(--ink);border:4px solid var(--butter);padding:18px 26px;border-radius:28px;font-size:22px;font-weight:900;opacity:0;transition:.35s cubic-bezier(.3,1.6,.6,1);pointer-events:none;z-index:9;box-shadow:0 12px 30px #f0b7a655}
+.toast.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+canvas#cf{position:fixed;inset:0;pointer-events:none;z-index:8}.muted{color:#7a5f5a;font-size:14px}
+h3{margin:18px 0 6px}
+.btn2{border:0;border-radius:20px;padding:13px;background:var(--blue);color:var(--ink);font:inherit;font-weight:700;font-size:16px;width:100%;margin:5px 0}
+.welcome nav,.welcome header{display:none}.safe *,.safe *::before,.safe *::after{animation:none!important;transition:none!important;box-shadow:none!important}.safe .card .inner{transform-style:flat}.safe .back{transform:none;display:none}.safe .card.flip .inner{transform:none}.safe .card.flip .back{display:flex}.safe .card.flip .front{display:none}
+canvas#cf{display:none}
+.wel{text-align:center;padding:60px 8px 20px}.wem{font-size:56px;animation:bnc 2s 2}.wel h2{font-size:32px;margin:12px 0 6px}.wel p{font-size:17px;line-height:1.45}
+.qbox{background:#fff;border-radius:32px;padding:20px 18px;margin:12px 0;box-shadow:0 10px 26px #f0b7a633;border:4px solid var(--blue);text-align:center}
+.qlab{font-size:13px;font-weight:800;background:var(--blue);padding:4px 12px;border-radius:20px}.qsent{font-size:23px;font-weight:700;margin:18px 0;line-height:1.45}.qsent .gap{display:inline-block;min-width:70px;border-bottom:3px dashed #ff8e72;color:#ff8e72}
+.qen{font-size:26px;font-weight:800;margin:20px 0 12px}.opts{display:grid;gap:10px}.opts button{border:0;border-radius:22px;padding:15px;font:inherit;font-size:19px;font-weight:800;background:var(--lav);color:var(--ink)}
+.opts button.ok,.reveal.ok{background:var(--mint)}.opts button.no,.reveal.no{background:var(--pink)}.reveal.close{background:var(--butter)}.opts button:disabled{opacity:1}
+.reveal{margin-top:14px;border-radius:22px;padding:14px;background:#fff3ec;font-size:17px;line-height:1.45}.reveal b.hl{background:#fff1b8;border-radius:6px;padding:0 4px}.reveal .say{position:static;display:inline-block;vertical-align:middle;margin-left:6px}
+.trow{display:flex;gap:8px}.types label{display:flex;gap:10px;align-items:center;margin:6px 0}.types input{width:auto}.nopulse{animation:none!important}
+.qbox.pop{animation:pop .45s}.qbox.wig{animation:wig .4s}
+[hidden]{display:none!important}
+nav button{font-size:11px}.gpat{font-weight:800;color:#e0573f;margin:10px 0 0}.gbox textarea{width:100%;border-radius:18px;border:2px solid var(--lav);padding:12px;font:inherit;font-size:17px;color:var(--ink)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:10px 0;min-height:46px}.chips.ans{background:#fff3ec;border-radius:18px;padding:8px;border:2px dashed #ffb3a0}
+.chips button{border:0;border-radius:16px;padding:10px 12px;font:inherit;font-size:17px;font-weight:700;background:var(--butter);color:var(--ink);box-shadow:0 3px 8px #0000000f}.chips.ans button{background:var(--mint)}
+.gsum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0}.gsum div{border-radius:18px;padding:10px;text-align:center;font-weight:800}
+.ggrp{background:#fff;border-radius:22px;padding:12px 14px;margin:10px 0;box-shadow:0 4px 12px #f0b7a622}.ggrp summary{font-weight:800;list-style:none;cursor:pointer}.ggrp summary::-webkit-details-marker{display:none}
+.gbar{display:flex;height:8px;border-radius:8px;overflow:hidden;margin-top:8px;background:#ffece4}.gbar i{display:block}.gpt{display:flex;gap:8px;align-items:center;padding:8px 0;border-top:1px solid #ffece4}.gpt div{flex:1;min-width:0}.gpt small{color:#7a5f5a;display:block}.gpt select{width:auto;font-size:12px;padding:5px}
+.mascot{display:flex;align-items:center;gap:12px;margin-bottom:12px}.mem{font-size:54px;transition:transform .4s}.mem.sad{filter:grayscale(.6);transform:rotate(-12deg) translateY(6px)}.mem.happy{animation:bnc 1s 2}
+.mbub{flex:1;background:#fff;border-radius:22px;padding:12px 14px;font-weight:700;box-shadow:0 6px 16px #f0b7a622;position:relative}
+.moreround{background:var(--mint);border-radius:24px;padding:12px 14px;margin-bottom:12px;text-align:center;font-weight:700}
+.gcard{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}.grow{background:#fff;border-radius:22px;padding:12px;box-shadow:0 6px 16px #f0b7a622;display:flex;flex-direction:column;justify-content:center;gap:4px}
+.grow:first-child{flex-direction:row;align-items:center;gap:8px}.flame{display:inline-block;line-height:1;transition:font-size .4s}
+.xpbar{height:10px;background:#ffece4;border-radius:10px;overflow:hidden}.xpbar i{display:block;height:100%;background:linear-gradient(90deg,#ffb7b0,#ffb3a0);transition:width .4s}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.cal div{aspect-ratio:1;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 6px #0000000a}
+.cal .met{background:var(--butter)}.cal .frz{background:var(--blue)}.cal .miss{background:#ece3df}.cal .today{outline:3px solid #ff8e72}.cal .fut{opacity:.35}
+.badges{display:flex;flex-wrap:wrap;gap:8px}.badges span{background:#fff;border-radius:16px;padding:7px 10px;font-size:13px;font-weight:700;box-shadow:0 2px 6px #0000000d}.badges span.lock{opacity:.35;filter:grayscale(1)}
+.srow{display:flex;align-items:center;gap:10px;margin-top:8px;min-height:34px}.smasc{font-size:30px;display:inline-block}.smasc.j{animation:bnc .45s}.smasc.s{animation:wig .4s}
+.combo{font-weight:900;background:var(--peach);border-radius:16px;padding:3px 10px}.combo:empty{display:none}.xpgain{font-weight:900;color:#e0573f;opacity:0;transition:.5s}.xpgain.on{opacity:1}
+
+.opts button small{display:block;font-size:13px;font-weight:600;color:#a0605a}.opts.zhopts button{font-size:26px}
+.hanline{font-size:22px;font-weight:700;margin-top:12px}.ex .pyl{display:block;font-size:14px;font-style:normal;color:#e0573f;margin-top:2px}.ex .enl{display:block;font-size:14px;margin-top:2px}
+.qsent{font-size:26px}.qpy{font-size:15px;color:#e0573f;font-weight:600;margin-top:-8px}.qtr{font-size:16px;color:#7a5f5a;margin:6px 0 10px}
+.row b.rz{font-size:20px}.row .rp{color:#e0573f;font-size:13px;font-weight:600}
+.about{background:#fff;border-radius:22px;padding:12px 14px;margin:8px 0;font-size:14px;line-height:1.45}
+.hide-py .row.peek .pyh{display:inline}.nosay .say{display:none}
+</style></head><body>
+<header><h1>汉语 Hànyǔ 🐼</h1><div class="streak" id="streak">🔥 0</div></header>
+<section class="view" id="v-welcome"><div class="wel"><div class="wem">🏮🐼🥟</div><h2>你好! Welcome</h2><p>Your pastel Chinese flashcard garden is ready. Plant the first seeds 🌱</p>
+ <button class="big" id="starterBtn">🎒 Load starter HSK 1 words</button>
+ <button class="btn2" id="seedBtn">📂 Load my word list</button><input type="file" id="seedFile" accept=".json,.csv,.txt,application/json,text/csv" hidden>
+ <p class="muted">My word list: a CSV or JSON with hanzi, pinyin, English, example (or a progress backup). Your words stay on this phone only.</p>
+ <button class="btn2" id="emptyBtn">✏️ Start empty &amp; add words by hand</button></div></section>
+<section class="view" id="v-recover"><div class="wel"><div class="wem">🛟</div><h2>Oops, let's fix this</h2><p>The app couldn't start with the saved data. Your words are still stored on this phone.</p>
+ <p class="muted" id="recErr"></p><button class="big" id="recExport">💾 Export my data</button><button class="btn2" id="recSafe">🐢 Try safe mode</button><button class="btn2" id="recReset">🧹 Reset (erase progress)</button></div></section>
+<section class="view" id="v-home">
+ <div class="mascot" id="mascot"><div class="mem" id="mEm">🥟</div><div class="mbub" id="mMsg">你好!</div></div>
+ <div class="moreround" id="moreRound" hidden>🎉 <b>Goal done!</b> One more round? <button class="big nopulse" id="moreBtn">▶ 再来一轮 One more round</button></div>
+ <div class="ringwrap"><svg class="ring" viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.9" fill="none" stroke="#ffece4" stroke-width="3.5"/><circle id="ringc" cx="18" cy="18" r="15.9" fill="none" stroke="#ff8e72" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="0 100" transform="rotate(-90 18 18)"/><text id="ringt" x="18" y="21" text-anchor="middle" fill="#4b3434" font-size="8" font-weight="800">0</text></svg>
+ <div><b id="goaltxt">0 / 20 today</b><div class="muted">Daily goal · <span id="duetxt"></span></div></div></div>
+ <div class="sec" id="tiles"></div>
+ <button class="big" id="startBtn">▶ 练习 Practice</button>
+ <div class="gcard"><div class="grow"><span class="flame" id="flame">🔥</span><div><b id="streakTxt">0-day streak</b><div class="muted" id="freezeTxt"></div></div></div>
+  <div class="grow"><b id="lvlTxt">Level 1</b><div class="xpbar"><i id="xpbar"></i></div><span class="muted" id="xpTxt"></span></div></div>
+ <h3>📅 Sticker book</h3><div class="cal" id="cal"></div><p class="muted">🥟 goal met · 🧊 streak freeze · grey = missed</p>
+ <h3>🏅 Badges</h3><div class="badges" id="badges"></div>
+ <p class="muted">Tip: tap the card to flip. Swipe ← didn't know, ↑ kinda, → knew it.</p>
+</section>
+<section class="view" id="v-study">
+ <div class="bar"><i id="pbar" style="width:0"></i></div>
+ <div class="srow"><span class="smasc" id="sMasc">🥟</span><span class="combo" id="combo"></span><span class="xpgain" id="xpGain"></span></div>
+ <div class="card" id="card"><div class="inner"><div class="face front"><span class="tag" id="tag"></span><button class="say" id="say1">🔊</button><div class="zh" id="fzh"></div><div class="py pyh" id="fpy"></div><div class="hint">tap to flip</div></div>
+ <div class="face back"><button class="say" id="say2">🔊</button><div class="zh" id="bzh"></div><div class="py" id="bpy"></div><div class="en" id="ben"></div><div class="ex" id="bex"></div></div></div></div>
+ <div id="pickBox" class="qbox" hidden><span class="qlab">🧩 Fill the blank · pick the word</span><div class="qsent" id="pSent"></div><div class="qtr" id="pTr"></div><div class="opts zhopts" id="pOpts"></div><div class="reveal" id="pRev" hidden></div></div>
+ <div id="typeBox" class="qbox" hidden><span class="qlab">⌨️ English → Chinese · type it</span><div class="qen" id="tEn"></div>
+  <input id="tIn" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="汉字 or pinyin (nǐ hǎo / ni3hao3 / nihao)"><div class="trow"><button class="btn2" id="tHint">💡 Hint</button><button class="btn2" id="tShow">👀 Show answer</button></div>
+  <button class="big nopulse" id="tCheck">Check ✓</button><div class="reveal" id="tRev" hidden></div></div>
+ <div id="gramBox" class="qbox gbox" hidden><span class="qlab" id="gLab">📐 Grammar</span><div class="gpat" id="gPat"></div><div class="qen" id="gPrompt"></div><div class="qsent" id="gSent"></div>
+  <div class="opts" id="gOpts"></div>
+  <div id="gFill" hidden><input id="gIn" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Missing word (汉字 or pinyin)"><button class="big nopulse" id="gCheck">Check ✓</button></div>
+  <div id="gReo" hidden><div class="chips ans" id="gAns"></div><div class="chips" id="gChips"></div><div class="trow"><button class="btn2" id="gUndo">↩︎ Undo</button><button class="btn2" id="gReoCheck">Check ✓</button></div></div>
+  <div id="gBuild" hidden><textarea id="gTxt" rows="3" placeholder="Write your sentence (汉字 or pinyin)…"></textarea><button class="big nopulse" id="gShow">👀 Compare with the model answer</button></div>
+  <div class="reveal" id="gRev" hidden></div>
+  <div class="grade" id="gSelf" hidden><button class="g0" data-sg="0">😵<br>Didn't know</button><button class="g1" data-sg="1">🤔<br>Kinda</button><button class="g2" data-sg="2">😎<br>Knew it</button></div></div>
+ <button class="big nopulse" id="qNext" hidden>Next →</button>
+ <div class="grade" id="gradeRow"><button class="g0" data-g="0">😵<br>Didn't know</button><button class="g1" data-g="1">🤔<br>Kinda</button><button class="g2" data-g="2">😎<br>Knew it</button></div>
+ <button class="btn2" id="quitBtn">Done 完</button>
+</section>
+<section class="view list" id="v-words">
+ <div class="tabs" id="wtabs"><button class="learn on" data-s="learn">To learn</button><button class="practiced" data-s="practiced">Practiced</button><button class="learned" data-s="learned">Learned</button></div>
+ <input id="q" type="search" placeholder="🔎 Search hanzi / pinyin / English"><div id="wlist"></div><button class="btn2" id="more">Show more</button>
+</section>
+<section class="view" id="v-gram">
+ <h2 style="margin:6px 0">📐 Grammar 语法</h2><div class="gsum" id="gSum"></div>
+ <button class="big nopulse" id="gStart">▶ Practice grammar</button>
+ <div id="gList"></div>
+</section>
+<section class="view" id="v-more">
+ <h3>➕ Add a word</h3><input id="nzh" placeholder="汉字 (simplified)" lang="zh-CN"><input id="npy" placeholder="Pinyin with tone marks (e.g. nǐ hǎo)" autocapitalize="off"><input id="nen" placeholder="English meaning"><input id="nex" placeholder="Example sentence in Chinese (optional)" lang="zh-CN">
+ <button class="big" id="addBtn">Add to “Words to learn”</button>
+ <h3>⚙️ Settings</h3><label class="muted">Daily goal</label><select id="goalSel"><option>10</option><option>20</option><option>30</option><option>50</option><option>75</option><option>100</option><option>150</option><option value="custom">Custom…</option></select>
+ <label class="muted">Pinyin</label><select id="pySel"><option value="always">Always show pinyin</option><option value="after">Show after I flip / answer</option><option value="never">Hide pinyin (hanzi only, I'll check myself)</option></select>
+ <label class="muted">Card types</label><div class="types"><label><input type="checkbox" id="tyFlash"> 🃏 Flashcards</label><label><input type="checkbox" id="tyPick"> 🧩 Fill-in-the-blank</label><label><input type="checkbox" id="tyType"> ⌨️ English → Chinese</label></div>
+ <label class="muted">Grammar in daily sessions</label><select id="gmixSel"><option value="0">Off</option><option value="10">10%</option><option value="20">20%</option><option value="30">30%</option><option value="50">50%</option></select>
+ <label class="muted">Mix</label><select id="mixSel"><option value="50,25,25">Balanced (50 / 25 / 25)</option><option value="70,15,15">Mostly flashcards (70 / 15 / 15)</option><option value="34,33,33">Even (⅓ each)</option><option value="20,40,40">Mostly quizzes (20 / 40 / 40)</option></select>
+ <label class="muted">Cards per session</label><select id="sessSel"><option>10</option><option>20</option><option>30</option><option>50</option></select>
+ <label class="muted" style="display:flex;gap:10px;align-items:center;margin:10px 0"><input type="checkbox" id="sndToggle" style="width:auto"> 🔔 Sounds &amp; buzz effects</label>
+ <h3>📚 Words</h3><button class="btn2" id="starterBtn2">🎒 Load starter HSK 1 words</button><button class="btn2" id="impBtn">📥 Load my word list / backup</button><input type="file" id="impFile" accept=".json,.csv,.txt,application/json,text/csv" hidden>
+ <div class="about"><b>Word list format</b><br>CSV with a header row: <code>hanzi,pinyin,english,example,example_pinyin,example_english</code> (only the first three are needed). JSON: an array of <code>{"hanzi","pinyin","english","example","example_pinyin","example_english"}</code>. Importing <b>merges</b>: new words are added to “Words to learn”, existing words keep their progress.</div>
+ <h3>💾 Backup</h3><button class="btn2" id="expBtn">Export progress (JSON)</button>
+ <label class="muted" style="display:flex;gap:10px;align-items:center;margin:10px 0"><input type="checkbox" id="safeToggle" style="width:auto"> Safe mode (no animations)</label><p class="muted" id="ver"></p>
+</section>
+<nav><button class="on" data-v="home"><b>🏠</b>Home</button><button data-v="study"><b>🃏</b>Practice</button><button data-v="words"><b>📚</b>Words</button><button data-v="gram"><b>📐</b>Grammar</button><button data-v="more"><b>⚙️</b>More</button></nav>
+<div class="toast" id="toast"></div><canvas id="cf"></canvas>
+<script src="pinyin.js?v=1"></script><script src="data.js?v=1"></script><script src="app.js?v=1"></script></body></html>
