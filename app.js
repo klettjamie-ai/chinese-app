@@ -1,6 +1,6 @@
 'use strict';
 // 汉语 Hànyǔ — pastel Chinese flashcards for English speakers. All data stays in this browser (localStorage).
-const KEY='hanyu-state-v1',SAFEKEY='hanyu-safe',BOOT='hanyu-boot',MIN=60e3,DAY=864e5;
+const KEY='hanyu-state-v1',SAFEKEY='hanyu-safe',BOOT='hanyu-boot',SEEDKEY='hanyu-seeded',VER='v2',MIN=60e3,DAY=864e5;
 const PRAC_IV=[10*MIN,1*DAY,2*DAY,4*DAY]; // practiced: short intervals
 const LEARNED_IV0=14*DAY,LEARNED_MAX=120*DAY; // learned: long, doubling
 const PY=window.Pinyin,GR=window.HANYU_GRAMMAR||{groups:[],points:[]},STARTER=window.HANYU_STARTER||[];
@@ -13,13 +13,15 @@ function save(){if(!saveT)saveT=setTimeout(saveNow,300)} // debounced
 addEventListener('pagehide',()=>saveT&&saveNow());document.addEventListener('visibilitychange',()=>{if(document.hidden&&saveT)saveNow()});
 const SAFE=/[?&]safe=1/.test(location.search)||localStorage.getItem(SAFEKEY)==='1';if(SAFE)document.documentElement.classList.add('safe');
 const CAN_SPEAK=typeof window.speechSynthesis!=='undefined'&&typeof window.SpeechSynthesisUtterance!=='undefined';if(!CAN_SPEAK)document.documentElement.classList.add('nosay');
-function blank(){return {v:1,app:'hanyu',goal:20,sessN:20,streak:0,lastDay:null,doneDay:today(),doneCount:0,cards:{},pyMode:'always'}}
+function blank(){return {v:1,app:'hanyu',goal:20,sessN:20,streak:0,lastDay:null,doneDay:today(),doneCount:0,cards:{},pyMode:'always',seeded:true,onboarded:true,removed:[],nextOrd:0}}
 function valid(d){return d&&typeof d==='object'&&d.cards&&typeof d.cards==='object'&&!Array.isArray(d.cards)}
 // Normalise saved data (also used for imported backups). Never throws away progress except records that are not Chinese cards.
 function normalize(d){if(!valid(d))throw new Error('Saved data is not in the expected format');
   const had=Object.keys(d.cards).length;
+  if(!d.seeded)d.onboarded=true; // data from before auto-seeding: never re-seed, no onboarding banner
+  d.seeded=true;d.removed=Array.isArray(d.removed)?d.removed:[];d.nextOrd=+d.nextOrd||0;
   d.goal=+d.goal||20;d.sessN=+d.sessN||20;d.streak=+d.streak||0;d.doneCount=+d.doneCount||0;d.pyMode=d.pyMode==='after'?'after':'always';
-  for(const k in d.cards){const c=d.cards[k];if(!c||!c.zh){delete d.cards[k];continue}if(!['learn','practiced','learned'].includes(c.s))c.s='learn';c.lv=Math.max(0,Math.min(+c.lv||0,10));c.due=+c.due||0;c.en=c.en||'';c.py=c.py||'';c.id=c.id||k}
+  for(const k in d.cards){const c=d.cards[k];if(!c||!c.zh){delete d.cards[k];continue}if(!['learn','practiced','learned'].includes(c.s))c.s='learn';c.lv=Math.max(0,Math.min(+c.lv||0,10));c.due=+c.due||0;c.en=c.en||'';c.py=c.py||'';c.id=c.id||k;if(typeof c.o!=='number'){const i=SIDX[c.zh];c.o=i!==undefined?i:1000+d.nextOrd++}}
   if(had&&!Object.keys(d.cards).length)throw new Error('This file is not a Chinese Cards backup');
   return d}
 async function load(){const raw=localStorage.getItem(KEY);if(!raw)return;S=normalize(JSON.parse(raw))}
@@ -33,12 +35,15 @@ const hid=s=>{let h=0;for(const c of s)h=(h*31+c.codePointAt(0))>>>0;return 'w'+
 const norm=s=>String(s||'').normalize('NFC').replace(/\s+/g,'').trim();
 const wkey=(zh,py)=>norm(zh)+'|'+PY.toneless(String(py||'').split('/')[0]);
 const fixPy=s=>{s=String(s||'').trim();return /[a-zA-Zü]\s*[1-5]/.test(s)?PY.toMarks(s):s};
+const SIDX={};STARTER.forEach((w,i)=>{if(SIDX[w.zh]===undefined)SIDX[w.zh]=i});
+const pyAlts=p=>String(p||'').split('/').map(x=>PY.toneless(x)).filter(Boolean);
+const samePy=(a,b)=>{const x=pyAlts(a),y=pyAlts(b);return !x.length||!y.length||x.some(v=>y.includes(v))};
 const HDR={zh:['hanzi','chinese','zh','character','characters','simplified','word','front','汉字'],py:['pinyin','py','pronunciation','拼音'],en:['english','en','meaning','definition','translation','back'],
   ex:['example','sentence','ex','example_sentence','例句'],exPy:['example_pinyin','examplepinyin','ex_pinyin','sentence_pinyin'],exEn:['example_english','example_en','ex_english','sentence_english','example_translation','sentence_translation']};
 function mkWord(o){let ex=String(o.ex||'').trim(),exPy=String(o.exPy||'').trim(),exEn=String(o.exEn||'').trim();
   if(ex.includes('|')){const p=ex.split('|').map(x=>x.trim());ex=p[0];if(p.length>=3){exPy=exPy||p[1];exEn=exEn||p[2]}else exEn=exEn||p[1]||''}
   const zh=String(o.zh||'').trim(),py=fixPy(o.py),en=String(o.en||'').trim();if(!zh||!en)return null;
-  return {id:hid(wkey(zh,py)),zh,py,en,ex,exPy:fixPy(exPy),exEn,s:o.s||'learn'}}
+  return {id:hid(wkey(zh,py)),zh,py,en,ex,exPy:fixPy(exPy),exEn,s:o.s||'learn',o:typeof o.o==='number'?o.o:undefined}}
 // Accepts: progress backup {v,cards:{}}, a list of words (array or {words:[]}) or CSV/TSV: hanzi,pinyin,english,example,example_pinyin,example_english
 function parseWords(text,name){text=text.replace(/^\uFEFF/,'');
   if(/^\s*[\[{]/.test(text)&&!/\.csv$/i.test(name)){const d=JSON.parse(text);
@@ -57,18 +62,25 @@ function parseWords(text,name){text=text.replace(/^\uFEFF/,'');
   if(idx.zh<0)idx.zh=0;const seen=new Set(),words=[];
   rows.forEach(r=>{const g=i=>i>=0?(r[i]||'').trim():'';const w=mkWord({zh:g(idx.zh),py:g(idx.py),en:g(idx.en),ex:g(idx.ex),exPy:g(idx.exPy),exEn:g(idx.exEn)});if(!w||seen.has(w.id))return;seen.add(w.id);words.push(w)});
   return {words}}
-function mergeWords(words){const now=Date.now();if(!S)S=blank();const byZh={};for(const id in S.cards){const c=S.cards[id];(byZh[norm(c.zh)]=byZh[norm(c.zh)]||[]).push(id)}let added=0,updated=0;
-  words.forEach(w=>{let id=S.cards[w.id]?w.id:null;
-    if(!id){const cand=byZh[norm(w.zh)]||[];id=cand.find(i=>!S.cards[i].py||!w.py||wkey(S.cards[i].zh,S.cards[i].py)===wkey(w.zh,w.py))||null}
+// opts.starter: bundled deck (skips words the user removed unless opts.force; refreshes text of untouched starter cards). Never changes progress.
+function mergeWords(words,opts={}){const now=Date.now();if(!S)S=blank();const byZh={};for(const id in S.cards){const c=S.cards[id];(byZh[norm(c.zh)]=byZh[norm(c.zh)]||[]).push(id)}
+  const rem=new Set(S.removed||[]);let added=0,updated=0,skipped=0;
+  words.forEach(w=>{const k=wkey(w.zh,w.py);let id=S.cards[w.id]?w.id:null;
+    if(!id){const cand=byZh[norm(w.zh)]||[];id=cand.find(i=>samePy(S.cards[i].py,w.py))||null}
     if(id){const c=S.cards[id];let ch=false;
-      for(const f of ['py','ex','exPy','exEn']){if(!c[f]&&w[f]){c[f]=w[f];ch=true}}if(ch)updated++;return}
-    added++;S.cards[w.id]={id:w.id,zh:w.zh,py:w.py,en:w.en,ex:w.ex,exPy:w.exPy,exEn:w.exEn,s:w.s,lv:w.s==='practiced'?1:0,due:w.s==='learned'?now+LEARNED_IV0:now,seen:0,ok:0,miss:0};
+      if(opts.starter&&!c.user&&c.en===w.en){for(const f of ['py','ex','exPy','exEn']){if(w[f]&&c[f]!==w[f]){c[f]=w[f];ch=true}}}
+      else for(const f of ['py','ex','exPy','exEn']){if(!c[f]&&w[f]){c[f]=w[f];ch=true}}
+      if(typeof w.o==='number'&&opts.starter&&c.o!==w.o){c.o=w.o}
+      if(ch)updated++;return}
+    if(opts.starter&&!opts.force&&rem.has(k)){skipped++;return}
+    rem.delete(k);
+    added++;S.cards[w.id]={id:w.id,zh:w.zh,py:w.py,en:w.en,ex:w.ex,exPy:w.exPy,exEn:w.exEn,s:w.s,lv:w.s==='practiced'?1:0,due:w.s==='learned'?now+LEARNED_IV0:now,seen:0,ok:0,miss:0,o:typeof w.o==='number'?w.o:1000+(S.nextOrd++)};
     (byZh[norm(w.zh)]=byZh[norm(w.zh)]||[]).push(w.id)});
-  saveNow();return {added,updated}}
+  S.removed=[...rem];saveNow();return {added,updated,skipped}}
 function importText(text,name){const r=parseWords(text,name);
   if(r.progress){S=normalize(r.progress);ensureGram();saveNow();return 'progress'}
   if(!r.words.length)throw new Error('no words');return mergeWords(r.words)}
-function loadStarter(){return mergeWords(STARTER.map(w=>mkWord({zh:w.zh,py:w.py,en:w.en,ex:w.ex,exPy:w.exPy,exEn:w.exEn})).filter(Boolean))}
+function loadStarter(opts){return mergeWords(STARTER.map((w,i)=>mkWord({zh:w.zh,py:w.py,en:w.en,ex:w.ex,exPy:w.exPy,exEn:w.exEn,o:i})).filter(Boolean),{starter:true,force:!!(opts&&opts.force)})}
 // Built-in grammar: content ships with the app, only per-point progress is stored (S.gram).
 function ensureGram(){if(!S)return;S.gram=S.gram||{};GR.points.forEach(p=>{if(!S.gram[p.id])S.gram[p.id]={id:p.id,s:'learn',lv:0,due:Date.now(),seen:0,ok:0,miss:0}})}
 function rollDay(){if(S.doneDay!==today()){S.doneDay=today();S.doneCount=0;save()}}
@@ -78,7 +90,7 @@ function buildQueue(n,now=Date.now()){
   const all=cards(),sh=a=>a.sort(()=>Math.random()-.5);
   const prac=all.filter(c=>c.s==='practiced'&&c.due<=now).sort((a,b)=>a.due-b.due);
   const lrn=all.filter(c=>c.s==='learned'&&c.due<=now).sort((a,b)=>a.due-b.due);
-  const neu=sh(all.filter(c=>c.s==='learn')).sort((a,b)=>(b.miss>0)-(a.miss>0));
+  const neu=all.filter(c=>c.s==='learn').sort((a,b)=>((b.miss>0)-(a.miss>0))||((a.o||0)-(b.o||0))); // new words: missed ones first, then most-common-first order
   const q=[],take=(arr,k)=>{while(k-->0&&arr.length&&q.length<n)q.push(arr.shift())};
   take(prac,Math.ceil(n*.6));take(lrn,Math.ceil(n*.2));
   if(!q.some(c=>c.s==='learned')){const ex=sh(all.filter(c=>c.s==='learned'));take(ex,1)} // retention spot-check
@@ -101,7 +113,9 @@ function show(v){document.querySelectorAll('.view').forEach(e=>e.classList.toggl
   if(v==='home')renderHome();if(v==='words')renderWords();if(v==='gram')renderGram();if(v==='study'&&!sess)startSession()}
 const EMO={learn:'🌱',practiced:'🌼',learned:'🌈'};const NAMES={learn:'Words to learn',practiced:'Words practiced',learned:'Words learned'};
 function applyPy(){document.body.classList.toggle('hide-py',S&&S.pyMode==='after')}
-function renderHome(){rollDay();checkStreak();const cnt={learn:0,practiced:0,learned:0},now=Date.now();let due=0;
+const verText=()=>'Offline-ready · '+cards().length+' words · '+GR.points.length+' grammar points · '+VER;
+function renderOnboard(){const el=$('onboard');el.hidden=!!S.onboarded;if(!S.onboarded)$('onbTxt').textContent=`Your deck is loaded: ${cards().length} beginner words (most common first) and ${GR.points.length} grammar points (easiest first). Grammar is mixed into every practice session, so there is nothing to set up — just tap Practice.`}
+function renderHome(){renderOnboard();rollDay();checkStreak();const cnt={learn:0,practiced:0,learned:0},now=Date.now();let due=0;
   cards().forEach(c=>{cnt[c.s]++;if(c.s!=='learn'&&c.due<=now)due++});
   $('tiles').innerHTML=Object.keys(cnt).map(k=>`<button class="tile ${k}" data-s="${k}"><span class="em">${EMO[k]}</span><span class="n">${cnt[k]}</span>${NAMES[k]}</button>`).join('');
   document.querySelectorAll('.tile').forEach(t=>t.onclick=()=>{tab=t.dataset.s;show('words')});
@@ -142,11 +156,13 @@ function record(c,g,item){grade(c,g);
 function renderWords(){document.querySelectorAll('#wtabs button').forEach(b=>b.classList.toggle('on',b.dataset.s===tab));
   const q=$('q').value.trim().toLowerCase(),f=s=>PY.toneless(s);
   const list=cards().filter(c=>c.s===tab&&(!q||c.zh.includes(q)||c.en.toLowerCase().includes(q)||(f(q)&&f(c.py).includes(f(q)))));
-  $('wlist').innerHTML=(list.length?`<p class="muted">${list.length} words</p>`:`<div class="empty"><span class="e">${q?'🔍':EMO[tab]}</span><b>${q?'Nothing found!':'Nothing here yet!'}</b><br>${q?'Try another search ✨':(Object.keys(S.cards).length?'Practice a bit and words will bloom here 🌸':'Add words in More, or load the starter HSK 1 deck 🌸')}</div>`)+list.slice(0,shown).map(c=>`<div class="row"><div><b class="rz">${esc(c.zh)}</b> <small class="rp pyh">${esc(c.py)}</small><small>${esc(c.en)}</small></div><button class="say" style="position:static" data-say="${esc(c.zh)}">🔊</button><select data-id="${c.id}">${Object.keys(NAMES).map(k=>`<option value="${k}"${k===c.s?' selected':''}>${k==='learn'?'To learn':k[0].toUpperCase()+k.slice(1)}</option>`).join('')}</select></div>`).join('');
+  $('wlist').innerHTML=(list.length?`<p class="muted">${list.length} words</p>`:`<div class="empty"><span class="e">${q?'🔍':EMO[tab]}</span><b>${q?'Nothing found!':'Nothing here yet!'}</b><br>${q?'Try another search ✨':(Object.keys(S.cards).length?'Practice a bit and words will bloom here 🌸':'Add words in More, or load the starter HSK 1 deck 🌸')}</div>`)+list.slice(0,shown).map(c=>`<div class="row"><div><b class="rz">${esc(c.zh)}</b> <small class="rp pyh">${esc(c.py)}</small><small>${esc(c.en)}</small></div><button class="say" style="position:static" data-say="${esc(c.zh)}">🔊</button><button class="say del" style="position:static" data-del="${c.id}" aria-label="Remove word">🗑</button><select data-id="${c.id}">${Object.keys(NAMES).map(k=>`<option value="${k}"${k===c.s?' selected':''}>${k==='learn'?'To learn':k[0].toUpperCase()+k.slice(1)}</option>`).join('')}</select></div>`).join('');
   $('more').style.display=list.length>shown?'':'none';
   $('wlist').querySelectorAll('select').forEach(s=>s.onchange=()=>{move(s.dataset.id,s.value);toast('Moved ✓');renderWords()});
   $('wlist').querySelectorAll('.row div').forEach(d=>d.onclick=()=>d.parentNode.classList.toggle('peek'));
-  $('wlist').querySelectorAll('[data-say]').forEach(b=>b.onclick=()=>speak(b.dataset.say))}
+  $('wlist').querySelectorAll('[data-say]').forEach(b=>b.onclick=()=>speak(b.dataset.say));
+  $('wlist').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>removeWord(b.dataset.del))}
+function removeWord(id){const c=S.cards[id];if(!c)return;if(!confirm('Remove “'+c.zh+'” and its progress? (It won’t come back unless you choose “Load starter words again”.)'))return;S.removed=S.removed||[];const k=wkey(c.zh,c.py);if(!S.removed.includes(k))S.removed.push(k);delete S.cards[id];saveNow();toast('Removed');renderWords()}
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
 function speak(t){if(!CAN_SPEAK)return toast('Audio isn’t available on this device');try{const u=new SpeechSynthesisUtterance(String(t).replace(/[\[\]\s]/g,''));u.lang='zh-CN';const vs=speechSynthesis.getVoices(),v=vs.find(v=>/^zh[-_]CN/i.test(v.lang))||vs.find(v=>/^zh/i.test(v.lang));if(v)u.voice=v;u.rate=.8;speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){toast('No Chinese voice found')}}
 function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),1300)}
@@ -282,14 +298,14 @@ function init(){if(inited)return renderHome();inited=true;ensureGram();applyPy()
   document.querySelectorAll('#wtabs button').forEach(b=>b.onclick=()=>{tab=b.dataset.s;shown=60;renderWords()});
   $('q').oninput=()=>{shown=60;renderWords()};$('more').onclick=()=>{shown+=100;renderWords()};
   $('addBtn').onclick=()=>{const zh=$('nzh').value.trim(),en=$('nen').value.trim();if(!zh||!en)return toast('Need hanzi + meaning');const py=fixPy($('npy').value),id='u'+Date.now().toString(36);
-    S.cards[id]={id,zh,py,en,ex:$('nex').value.trim(),s:'learn',lv:0,due:Date.now(),seen:0,ok:0,miss:0,user:1};save();$('nzh').value=$('npy').value=$('nen').value=$('nex').value='';celebrate('➕ Added: '+zh,false);$('ver').textContent='Offline-ready · '+cards().length+' words'};
+    S.removed=(S.removed||[]).filter(k=>k!==wkey(zh,py));S.cards[id]={id,zh,py,en,ex:$('nex').value.trim(),s:'learn',lv:0,due:Date.now(),seen:0,ok:0,miss:0,user:1,o:Math.min(0,...cards().map(c=>c.o||0))-1};save();$('nzh').value=$('npy').value=$('nen').value=$('nex').value='';celebrate('➕ Added: '+zh,false);$('ver').textContent=verText()};
   if(![...$('goalSel').options].some(o=>o.value==S.goal))$('goalSel').add(new Option(S.goal+' (custom)',S.goal),$('goalSel').options.length-1);$('goalSel').value=S.goal;$('sndToggle').checked=G().sound;$('sndToggle').onchange=e=>{G().sound=e.target.checked;save();beep(true)};$('sessSel').value=S.sessN;$('goalSel').onchange=e=>{let v=e.target.value;if(v==='custom'){v=parseInt(prompt('Daily goal (cards per day):',S.goal),10);if(!(v>0&&v<=1000)){e.target.value=S.goal;return}if(![...e.target.options].some(o=>o.value==v))e.target.add(new Option(v+' (custom)',v),e.target.options.length-1);e.target.value=v}S.goal=+v;save()};
   $('moreBtn').onclick=()=>{G().showMore=0;sess=null;show('study')};$('sessSel').onchange=e=>{S.sessN=+e.target.value;save()};
   $('expBtn').onclick=()=>{const b=new Blob([JSON.stringify(S)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='hanyu-backup-'+today()+'.json';a.click()};
   $('impBtn').onclick=()=>$('impFile').click();
   $('impFile').onchange=e=>{e.target.files[0]&&handleFile(e.target.files[0],false);e.target.value=''};
-  $('starterBtn2').onclick=()=>{const r=loadStarter();toast(r.added?`🎒 +${r.added} starter words`:'Starter words are already in your deck ✓');if(r.added)confetti(80);$('ver').textContent='Offline-ready · '+cards().length+' words'};
-  $('ver').textContent='Offline-ready · '+cards().length+' words';
+  $('starterBtn2').onclick=()=>{if(!confirm('Add any starter words that are missing (including ones you removed)? Words you already have and all progress stay untouched.'))return;const r=loadStarter({force:true});toast(r.added?`🎒 +${r.added} starter words`:'Your deck already has every starter word ✓');if(r.added)confetti(80);$('ver').textContent=verText()};
+  $('ver').textContent=verText();$('onbOk').onclick=()=>{S.onboarded=true;save();renderOnboard()};
   renderHome();
 }
 function welcome(){document.body.classList.add('welcome');$('v-welcome').classList.add('on')}
@@ -308,10 +324,14 @@ function recovery(err){document.body.classList.add('welcome');document.querySele
   $('recReset').onclick=()=>{if(confirm('Erase all progress on this phone? Export first if unsure.')){localStorage.removeItem(KEY);localStorage.setItem(BOOT,'0');location.replace(location.pathname)}}}
 function boot(){try{
   $('seedFile').onchange=e=>{e.target.files[0]&&handleFile(e.target.files[0],true);e.target.value=''};$('seedBtn').onclick=()=>$('seedFile').click();
-  $('starterBtn').onclick=()=>{try{const r=loadStarter();leaveWelcome();toast(`🎒 ${r.added} starter words loaded`);confetti(100)}catch(e){console.error(e);toast('Hmm, that didn\'t work 🙈')}};
+  $('starterBtn').onclick=()=>{try{const r=loadStarter({force:true});leaveWelcome();toast(`🎒 ${r.added} starter words loaded`);confetti(100)}catch(e){console.error(e);toast('Hmm, that didn\'t work 🙈')}};
   $('emptyBtn').onclick=()=>{S=blank();saveNow();leaveWelcome();show('more')};
   $('safeToggle').checked=SAFE;$('safeToggle').onchange=e=>{localStorage.setItem(SAFEKEY,e.target.checked?'1':'0');location.replace(location.pathname+(e.target.checked?'?safe=1':''))};
-  S?init():welcome()}catch(e){console.error(e);recovery(e)}}
+  if(S){localStorage.setItem(SEEDKEY,'1');init()}
+  else if(localStorage.getItem(SEEDKEY)!=='1'){ // first launch ever on this phone: ready-to-use beginner deck, seeded exactly once
+    S=blank();S.onboarded=false;loadStarter();S.seeded=true;localStorage.setItem(SEEDKEY,'1');saveNow();init()}
+  else welcome() // data was reset or removed after the first launch: never re-seed silently
+  }catch(e){console.error(e);recovery(e)}}
 load().then(boot,e=>{console.error(e);recovery(e)});
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').then(r=>r.update()).catch(()=>{});
-window.__app={get sess(){return sess},showCard,startSession,gramQueue,checkStreak,level,renderHome,saveNow,mergeWords,parseWords,importText,loadStarter,pickType,sentOf,buildQueue,grade,checkType,get S(){return S},PRAC_IV,LEARNED_IV0,GR,STARTER};
+window.__app={VER,wkey,removeWord,get sess(){return sess},showCard,startSession,gramQueue,checkStreak,level,renderHome,saveNow,mergeWords,parseWords,importText,loadStarter,pickType,sentOf,buildQueue,grade,checkType,get S(){return S},PRAC_IV,LEARNED_IV0,GR,STARTER};

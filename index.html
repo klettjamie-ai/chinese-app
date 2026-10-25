@@ -79,18 +79,20 @@ nav button{font-size:11px}.gpat{font-weight:800;color:#e0573f;margin:10px 0 0}.g
 .hanline{font-size:22px;font-weight:700;margin-top:12px}.ex .pyl{display:block;font-size:14px;font-style:normal;color:#e0573f;margin-top:2px}.ex .enl{display:block;font-size:14px;margin-top:2px}
 .qsent{font-size:26px}.qpy{font-size:15px;color:#e0573f;font-weight:600;margin-top:-8px}.qtr{font-size:16px;color:#7a5f5a;margin:6px 0 10px}
 .row b.rz{font-size:20px}.row .rp{color:#e0573f;font-size:13px;font-weight:600}
+.onboard{background:linear-gradient(135deg,#fff,#fff3e6);border:3px solid var(--butter);border-radius:24px;padding:12px 14px;margin-bottom:12px;box-shadow:0 8px 20px #f0b7a633}.onboard p{margin:6px 0 4px;font-size:15px;line-height:1.4}.onboard .btn2{margin:6px 0 0;background:var(--mint)}.say.del{background:var(--pink);font-size:16px}
 .about{background:#fff;border-radius:22px;padding:12px 14px;margin:8px 0;font-size:14px;line-height:1.45}
 .hide-py .row.peek .pyh{display:inline}.nosay .say{display:none}
 </style></head><body>
 <header><h1>汉语 Hànyǔ 🐼</h1><div class="streak" id="streak">🔥 0</div></header>
-<section class="view" id="v-welcome"><div class="wel"><div class="wem">🏮🐼🥟</div><h2>你好! Welcome</h2><p>Your pastel Chinese flashcard garden is ready. Plant the first seeds 🌱</p>
- <button class="big" id="starterBtn">🎒 Load starter HSK 1 words</button>
+<section class="view" id="v-welcome"><div class="wel"><div class="wem">🏮🐼🥟</div><h2>你好! Fresh start</h2><p>Your saved data on this phone was cleared. Plant the first seeds again 🌱</p>
+ <button class="big" id="starterBtn">🎒 Load the beginner starter words</button>
  <button class="btn2" id="seedBtn">📂 Load my word list</button><input type="file" id="seedFile" accept=".json,.csv,.txt,application/json,text/csv" hidden>
  <p class="muted">My word list: a CSV or JSON with hanzi, pinyin, English, example (or a progress backup). Your words stay on this phone only.</p>
  <button class="btn2" id="emptyBtn">✏️ Start empty &amp; add words by hand</button></div></section>
 <section class="view" id="v-recover"><div class="wel"><div class="wem">🛟</div><h2>Oops, let's fix this</h2><p>The app couldn't start with the saved data. Your words are still stored on this phone.</p>
  <p class="muted" id="recErr"></p><button class="big" id="recExport">💾 Export my data</button><button class="btn2" id="recSafe">🐢 Try safe mode</button><button class="btn2" id="recReset">🧹 Reset (erase progress)</button></div></section>
 <section class="view" id="v-home">
+ <div class="onboard" id="onboard" hidden><b>👋 You’re all set!</b><p id="onbTxt"></p><button class="btn2 nopulse" id="onbOk">Got it — let’s go</button></div>
  <div class="mascot" id="mascot"><div class="mem" id="mEm">🥟</div><div class="mbub" id="mMsg">你好!</div></div>
  <div class="moreround" id="moreRound" hidden>🎉 <b>Goal done!</b> One more round? <button class="big nopulse" id="moreBtn">▶ 再来一轮 One more round</button></div>
  <div class="ringwrap"><svg class="ring" viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.9" fill="none" stroke="#ffece4" stroke-width="3.5"/><circle id="ringc" cx="18" cy="18" r="15.9" fill="none" stroke="#ff8e72" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="0 100" transform="rotate(-90 18 18)"/><text id="ringt" x="18" y="21" text-anchor="middle" fill="#4b3434" font-size="8" font-weight="800">0</text></svg>
@@ -142,11 +144,11 @@ nav button{font-size:11px}.gpat{font-weight:800;color:#e0573f;margin:10px 0 0}.g
  <label class="muted">Mix</label><select id="mixSel"><option value="50,25,25">Balanced (50 / 25 / 25)</option><option value="70,15,15">Mostly flashcards (70 / 15 / 15)</option><option value="34,33,33">Even (⅓ each)</option><option value="20,40,40">Mostly quizzes (20 / 40 / 40)</option></select>
  <label class="muted">Cards per session</label><select id="sessSel"><option>10</option><option>20</option><option>30</option><option>50</option></select>
  <label class="muted" style="display:flex;gap:10px;align-items:center;margin:10px 0"><input type="checkbox" id="sndToggle" style="width:auto"> 🔔 Sounds &amp; buzz effects</label>
- <h3>📚 Words</h3><button class="btn2" id="starterBtn2">🎒 Load starter HSK 1 words</button><button class="btn2" id="impBtn">📥 Load my word list / backup</button><input type="file" id="impFile" accept=".json,.csv,.txt,application/json,text/csv" hidden>
+ <h3>📚 Words</h3><button class="btn2" id="starterBtn2">🎒 Load starter words again (adds any that are missing)</button><button class="btn2" id="impBtn">📥 Load my word list / backup</button><input type="file" id="impFile" accept=".json,.csv,.txt,application/json,text/csv" hidden>
  <div class="about"><b>Word list format</b><br>CSV with a header row: <code>hanzi,pinyin,english,example,example_pinyin,example_english</code> (only the first three are needed). JSON: an array of <code>{"hanzi","pinyin","english","example","example_pinyin","example_english"}</code>. Importing <b>merges</b>: new words are added to “Words to learn”, existing words keep their progress.</div>
  <h3>💾 Backup</h3><button class="btn2" id="expBtn">Export progress (JSON)</button>
  <label class="muted" style="display:flex;gap:10px;align-items:center;margin:10px 0"><input type="checkbox" id="safeToggle" style="width:auto"> Safe mode (no animations)</label><p class="muted" id="ver"></p>
 </section>
 <nav><button class="on" data-v="home"><b>🏠</b>Home</button><button data-v="study"><b>🃏</b>Practice</button><button data-v="words"><b>📚</b>Words</button><button data-v="gram"><b>📐</b>Grammar</button><button data-v="more"><b>⚙️</b>More</button></nav>
 <div class="toast" id="toast"></div><canvas id="cf"></canvas>
-<script src="pinyin.js?v=1"></script><script src="data.js?v=1"></script><script src="app.js?v=1"></script></body></html>
+<script src="pinyin.js?v=2"></script><script src="data.js?v=2"></script><script src="app.js?v=2"></script></body></html>

@@ -1,5 +1,5 @@
 // network-first for pages/scripts so fixes arrive promptly; cache fallback offline. GET same-origin only.
-const C='hanyu-v1';const F=['./','index.html','app.js?v=1','pinyin.js?v=1','data.js?v=1','manifest.webmanifest','icon-180.png','icon-192.png','icon-512.png'];
+const C='hanyu-v2';const F=['./','index.html','app.js?v=2','pinyin.js?v=2','data.js?v=2','manifest.webmanifest','icon-180.png','icon-192.png','icon-512.png'];
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(C).then(c=>c.addAll(F)).catch(()=>{}))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x.startsWith('hanyu-')&&x!==C).map(x=>caches.delete(x)))).then(()=>self.clients.claim()))});
 self.addEventListener('fetch',e=>{const r=e.request;if(r.method!=='GET')return;const u=new URL(r.url);if(u.origin!==location.origin)return;
